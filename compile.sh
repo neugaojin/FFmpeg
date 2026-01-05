@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 
+export PKG_CONFIG_PATH=""
+
+echo "========================================"
+echo "$PKG_CONFIG_PATH"
+echo "========================================"
+
+
+# 清理旧的构建产物，防止版本号残留
+make distclean
+
 ./configure \
-  --prefix=/Users/an/workspace/ffmpeg \
+  --prefix=/Users/bytedance/workspace/ffmpeg \
   --enable-shared \
   --disable-static \
   --enable-pic \
+  --install-name-dir=@rpath \
   \
   --enable-gpl \
   --enable-nonfree \
   --enable-pthreads \
-  \
-  --enable-libx264 \
-  --enable-libx265 \
-  --enable-libvpx \
-  --enable-libmp3lame \
-  --enable-libopus \
-  --enable-libfdk-aac \
-  --enable-libvorbis \
-  --enable-libass \
-  --enable-libfreetype \
-  --enable-libfontconfig \
   \
   --enable-version3 \
   --enable-hardcoded-tables \
@@ -27,9 +27,15 @@
   \
   --disable-debug \
   --disable-doc \
+  \
+  --disable-ffplay \
+  --disable-sdl2 \
+  --disable-libxcb \
+  --disable-xlib \
+  \
   --cc=clang \
   --extra-cflags="-I/usr/local/include" \
-  --extra-ldflags="-L/usr/local/lib"
+  --extra-ldflags="-liconv"
 
 
 # 使用所有可用的CPU核心进行编译

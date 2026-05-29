@@ -61,7 +61,7 @@ function Import-VsBuildEnvironment {
         [string]$TargetArch
     )
 
-    $cmd = "call `"$VsDevCmdPath`" -arch=$TargetArch -host_arch=$TargetArch >nul && set"
+    $cmd = 'call "' + $VsDevCmdPath + '" -arch=' + $TargetArch + ' -host_arch=' + $TargetArch + ' >nul && set'
     $envDump = & cmd.exe /d /s /c $cmd
     if ($LASTEXITCODE -ne 0) {
         throw "初始化 Visual Studio Build Tools 环境失败。"
@@ -107,7 +107,8 @@ function Assert-MsysTool {
         [string]$InstallHint
     )
 
-    & $BashPath -lc "command -v $ToolName >/dev/null 2>&1"
+    $checkCommand = 'command -v ' + $ToolName + ' >/dev/null 2>&1'
+    & $BashPath -lc $checkCommand
     if ($LASTEXITCODE -ne 0) {
         throw "MSYS2 环境中未找到 $ToolName。$InstallHint"
     }
@@ -181,7 +182,17 @@ make -j"${CORES:-4}" || make -j1
 make install
 '@
 
-& $bashPath -lc $buildScript
+$tempBuildScript = Join-Path ([System.IO.Path]::GetTempPath()) ("ffmpeg_build_windows_{0}.sh" -f ([Guid]::NewGuid().ToString("N")))
+Set-Content -LiteralPath $tempBuildScript -Value $buildScript -Encoding ASCII
+
+try {
+    $env:BUILD_SCRIPT_WIN = $tempBuildScript
+    & $bashPath -lc 'bash "$(cygpath -u "$BUILD_SCRIPT_WIN")"'
+} finally {
+    Remove-Item -LiteralPath $tempBuildScript -Force -ErrorAction SilentlyContinue
+    Remove-Item Env:\BUILD_SCRIPT_WIN -ErrorAction SilentlyContinue
+}
+
 if ($LASTEXITCODE -ne 0) {
     throw "FFmpeg Windows 编译失败。"
 }
